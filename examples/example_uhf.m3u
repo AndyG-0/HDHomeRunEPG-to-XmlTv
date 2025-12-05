@@ -1,0 +1,49 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:10
+
+# UHF TV Guide - IPTV Playlist
+# This is an example M3U playlist file showing the correct tvg-id format for use with HDHomeRunEPG_to_XmlTv
+#
+# Important: The tvg-id values MUST match the channel IDs in your XMLTV file
+# The HDHomeRunEPG_to_XmlTv script generates channel IDs with the format: hdhomerun.{GuideNumber}
+#
+# For example, if you have a channel with GuideNumber "501", the tvg-id should be "hdhomerun.501"
+# The GuideNumber is provided by your HDHomeRun device in the lineup.json response
+
+# Example channels - Replace with your actual channels from your HDHomeRun device
+# To find your channel's GuideNumber, check the lineup.json from your HDHomeRun:
+#   http://{hdhomerun-ip}/lineup.json
+
+#EXTINF:-1 tvg-id="hdhomerun.501" tvg-name="NBC" group-title="Network",NBC
+http://127.0.0.1:8000/video?channel=501
+
+#EXTINF:-1 tvg-id="hdhomerun.502" tvg-name="CBS" group-title="Network",CBS
+http://127.0.0.1:8000/video?channel=502
+
+#EXTINF:-1 tvg-id="hdhomerun.503" tvg-name="ABC" group-title="Network",ABC
+http://127.0.0.1:8000/video?channel=503
+
+#EXTINF:-1 tvg-id="hdhomerun.504" tvg-name="FOX" group-title="Network",FOX
+http://127.0.0.1:8000/video?channel=504
+
+#EXTINF:-1 tvg-id="hdhomerun.505" tvg-name="PBS" group-title="Network",PBS
+http://127.0.0.1:8000/video?channel=505
+
+# Local Channels
+#EXTINF:-1 tvg-id="hdhomerun.201" tvg-name="Local News" group-title="Local",Local News
+http://127.0.0.1:8000/video?channel=201
+
+# Sports Channels
+#EXTINF:-1 tvg-id="hdhomerun.601" tvg-name="ESPN" group-title="Sports",ESPN
+http://127.0.0.1:8000/video?channel=601
+
+#EXTINF:-1 tvg-id="hdhomerun.602" tvg-name="ESPN2" group-title="Sports",ESPN2
+http://127.0.0.1:8000/video?channel=602
+
+# Premium Channels
+#EXTINF:-1 tvg-id="hdhomerun.801" tvg-name="HBO" group-title="Premium",HBO
+http://127.0.0.1:8000/video?channel=801
+
+#EXTINF:-1 tvg-id="hdhomerun.802" tvg-name="Showtime" group-title="Premium",Showtime
+http://127.0.0.1:8000/video?channel=802

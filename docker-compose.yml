@@ -1,31 +1,84 @@
-
-
 services:
-  # jellyfin:
-  #   image: jellyfin/jellyfin
-  #   container_name: jellyfin
-  #   ports:
-  #     - 8096:8096
-  #   volumes:
-  #     - output_data:/app/output
-  #   restart: 'unless-stopped'
-  #   environment:
-  #     - JELLYFIN_PublishedServerUrl=http://jellyfin.local.com
-  #   extra_hosts:
-  #     - 'host.docker.internal:host-gateway'
-
-  tvguide:
-    image: tvguide
-    container_name: tvguide
+  # HDHomeRun EPG to XMLTV service in HTTP mode
+  tvguide-http:
+    image: ghcr.io/andyg-0/hdhomerun-epg:latest
+    container_name: tvguide-http
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "9999:9999"
     volumes:
       - output_data:/app/output
     environment:
-      - HOST=192.168.1.100
-      - FILENAME=/app/output/output.xml
+      # Container Mode: 'http' or 'file-only'
+      - CONTAINER_MODE=http
+      
+      # HDHomeRun device configuration
+      - HDHOMERUN_HOST=192.168.1.100
+      
+      # EPG Output configuration
+      - EPG_OUTPUT_FILE=/app/output/epg.xml
+      - M3U_OUTPUT_FILE=/app/output/channels.m3u
+      - EPG_DAYS=7
+      - EPG_HOURS=3
+      
+      # Debug mode: on, full, or off
+      - DEBUG=on
+      
+      # HTTP Server configuration (used in http mode)
+      - HTTP_PORT=9999
+      - HTTP_BIND_ADDRESS=0.0.0.0
+      
+      # Cron schedule for EPG refresh (minute hour day month weekday)
+      # Default: every 4 hours
+      - CRON_SCHEDULE=0 */4 * * *
     restart: 'unless-stopped'
+    healthcheck:
+      test: ["/app/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # HDHomeRun EPG to XMLTV service in file-only mode (alternative configuration)
+  tvguide-file-only:
+    image: ghcr.io/andyg-0/hdhomerun-epg:latest
+    container_name: tvguide-file-only
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # No ports exposed in file-only mode
+    volumes:
+      - ./output:/app/output  # Local directory mapping for file-only mode
+    environment:
+      # Container Mode: 'http' or 'file-only'
+      - CONTAINER_MODE=file-only
+      
+      # HDHomeRun device configuration
+      - HDHOMERUN_HOST=192.168.1.100
+      
+      # EPG Output configuration
+      - EPG_OUTPUT_FILE=/app/output/epg.xml
+      - M3U_OUTPUT_FILE=/app/output/channels.m3u
+      - EPG_DAYS=7
+      - EPG_HOURS=3
+      
+      # Debug mode: on, full, or off
+      - DEBUG=on
+      
+      # Cron schedule for EPG refresh (minute hour day month weekday)
+      # Default: every 4 hours
+      - CRON_SCHEDULE=0 */4 * * *
+    restart: 'unless-stopped'
+    profiles:
+      - file-only  # Use docker-compose --profile file-only up to start this service
+    healthcheck:
+      test: ["/app/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   output_data:

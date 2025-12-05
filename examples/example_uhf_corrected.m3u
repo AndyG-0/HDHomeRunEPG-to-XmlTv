@@ -1,0 +1,54 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:10
+
+# UHF TV Guide - IPTV Playlist (Corrected for Actual Channel Numbers)
+# This M3U playlist file shows the correct tvg-id format based on actual HDHomeRun channels
+#
+# IMPORTANT: The tvg-id values MUST match the channel IDs in your XMLTV file
+# The HDHomeRunEPG_to_XmlTv script generates channel IDs with the format: hdhomerun.{GuideNumber}
+#
+# Your HDHomeRun device returns GuideNumbers that include RF channel + sub-channel
+# For example: 3.1, 3.2, 5.1, 10.1, etc. (NOT simple numbers like 501, 502)
+#
+# To find your actual channels, check the generated epg.xml file or:
+#   http://{hdhomerun-ip}/lineup.json
+
+# NBC, CBS, ABC, FOX, PBS and other broadcast channels
+#EXTINF:-1 tvg-id="hdhomerun.3.1" tvg-name="KTVK-HD" group-title="Broadcast",KTVK-HD
+http://127.0.0.1:8000/video?channel=3.1
+
+#EXTINF:-1 tvg-id="hdhomerun.5.1" tvg-name="KPHO-HD" group-title="Broadcast",KPHO-HD
+http://127.0.0.1:8000/video?channel=5.1
+
+#EXTINF:-1 tvg-id="hdhomerun.10.1" tvg-name="KSAZ-TV" group-title="Broadcast",KSAZ-TV
+http://127.0.0.1:8000/video?channel=10.1
+
+#EXTINF:-1 tvg-id="hdhomerun.12.1" tvg-name="KPNX-HD" group-title="Broadcast",KPNX-HD
+http://127.0.0.1:8000/video?channel=12.1
+
+#EXTINF:-1 tvg-id="hdhomerun.15.1" tvg-name="ABC15" group-title="Broadcast",ABC15
+http://127.0.0.1:8000/video?channel=15.1
+
+# Subchannel examples
+#EXTINF:-1 tvg-id="hdhomerun.3.2" tvg-name="Comet" group-title="Subchannels",Comet
+http://127.0.0.1:8000/video?channel=3.2
+
+#EXTINF:-1 tvg-id="hdhomerun.3.3" tvg-name="Outlaw" group-title="Subchannels",Outlaw
+http://127.0.0.1:8000/video?channel=3.3
+
+#EXTINF:-1 tvg-id="hdhomerun.5.2" tvg-name="Cozi" group-title="Subchannels",Cozi
+http://127.0.0.1:8000/video?channel=5.2
+
+#EXTINF:-1 tvg-id="hdhomerun.10.2" tvg-name="KSAZ HD" group-title="Subchannels",KSAZ HD
+http://127.0.0.1:8000/video?channel=10.2
+
+#EXTINF:-1 tvg-id="hdhomerun.10.3" tvg-name="Heroes" group-title="Subchannels",Heroes
+http://127.0.0.1:8000/video?channel=10.3
+
+# Notes:
+# - Replace 127.0.0.1 with your actual server IP
+# - The tvg-id values MUST match the channel IDs in your generated XMLTV file
+# - Channel numbers include both RF channel and sub-channel (e.g., 3.1, 3.2, 10.1, 10.2, etc.)
+# - To get your actual channel list, extract channel IDs from the epg.xml file (after hdhomerun. prefix)
+# - Update this file whenever your HDHomeRun lineup changes or you regenerate the EPG

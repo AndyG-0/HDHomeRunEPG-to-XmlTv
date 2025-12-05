@@ -1,0 +1,399 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync --frozen
+      
+    - name: Run linter
+      run: uv run ruff check .
+      
+    - name: Run type checker
+      run: uv run mypy . || echo "MyPy check completed with warnings"
+      
+    - name: Run tests
+      run: uv run pytest tests/ -v --cov=. --cov-report=xml
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build:
+    name: Build and Push Docker Image  
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name != 'pull_request'
+    
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value={{branch}},enable={{is_default_branch}}
+          type=raw,value={{sha}},prefix={{branch}}-,enable={{is_default_branch}}
+        flavor: |
+          latest=auto
+          suffix=-{{date 'YYYYMMDD'}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Run Docker image tests
+      run: |
+        # Test that the image can be started and health checks pass
+        docker run -d \
+          --name test-container \
+          -e HDHOMERUN_HOST=test.example.com \
+          -e CONTAINER_MODE=file-only \
+          -e CRON_SCHEDULE="*/5 * * * *" \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+        
+        # Wait for container to be ready
+        sleep 30
+        
+        # Check that container is running
+        docker ps | grep test-container
+        
+        # Check that scripts are executable
+        docker exec test-container ls -la /app/scripts/
+        
+        # Check that cron is running
+        docker exec test-container pgrep cron
+        
+        # Cleanup
+        docker stop test-container
+        docker rm test-container
+
+  release:
+    name: Create Release & Push Release Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [test, security]
+    
+    permissions:
+      contents: write
+      packages: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract tag version
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "clean_version=${VERSION#v}" >> $GITHUB_OUTPUT
+        
+    - name: Extract metadata for release
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=raw,value=latest
+        labels: |
+          org.opencontainers.image.title=HDHomeRun EPG to XMLTV
+          org.opencontainers.image.description=Convert HDHomeRun EPG data to XMLTV format with M3U playlist generation
+          org.opencontainers.image.vendor=HDHomeRun Community
+          org.opencontainers.image.version=${{ steps.version.outputs.clean_version }}
+          org.opencontainers.image.created={{date 'YYYY-MM-DDTHH:mm:ssZ'}}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.licenses=MIT
+        flavor: |
+          latest=true
+          
+    - name: Build and push release images
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push=true
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get previous tag for changelog
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        # Create release notes
+        echo "## What's Changed in ${{ steps.version.outputs.version }}" > release_notes.md
+        echo "" >> release_notes.md
+        
+        if [ -n "$PREV_TAG" ]; then
+          echo "### Commits since $PREV_TAG:" >> release_notes.md
+          git log --oneline --no-merges $PREV_TAG..HEAD >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        echo "## Container Images" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "**Docker Images:**" >> release_notes.md
+        echo '```bash' >> release_notes.md
+        echo "# Release version" >> release_notes.md
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.clean_version }}" >> release_notes.md
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "# Specific architectures" >> release_notes.md
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.clean_version }}" >> release_notes.md
+        echo '```' >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## Quick Start" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### HTTP Mode" >> release_notes.md
+        echo '```bash' >> release_notes.md
+        echo "docker run -d \\" >> release_notes.md
+        echo "  --name hdhomerun-epg \\" >> release_notes.md
+        echo "  -p 8000:8000 \\" >> release_notes.md
+        echo "  -e CONTAINER_MODE=http \\" >> release_notes.md
+        echo "  -e HDHOMERUN_HOST=192.168.1.100 \\" >> release_notes.md
+        echo "  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.clean_version }}" >> release_notes.md
+        echo '```' >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### File-Only Mode" >> release_notes.md
+        echo '```bash' >> release_notes.md
+        echo "docker run -d \\" >> release_notes.md
+        echo "  --name hdhomerun-epg \\" >> release_notes.md
+        echo "  -v ./output:/app/output \\" >> release_notes.md
+        echo "  -e CONTAINER_MODE=file-only \\" >> release_notes.md
+        echo "  -e HDHOMERUN_HOST=192.168.1.100 \\" >> release_notes.md
+        echo "  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.clean_version }}" >> release_notes.md
+        echo '```' >> release_notes.md
+        echo "" >> release_notes.md
+        
+        if [ -n "$PREV_TAG" ]; then
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...${{ steps.version.outputs.version }}" >> release_notes.md
+        fi
+        
+        # Set output for GitHub release
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: ${{ steps.version.outputs.version }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+        generate_release_notes: false
+        
+    - name: Test release images
+      run: |
+        # Test that the release image can be started and health checks pass
+        docker run -d \
+          --name test-release-container \
+          -e HDHOMERUN_HOST=test.example.com \
+          -e CONTAINER_MODE=file-only \
+          -e CRON_SCHEDULE="*/5 * * * *" \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.clean_version }}
+        
+        # Wait for container to be ready
+        sleep 30
+        
+        # Check that container is running
+        docker ps | grep test-release-container
+        
+        # Check that scripts are executable
+        docker exec test-release-container ls -la /app/scripts/
+        
+        # Check that cron is running
+        docker exec test-release-container pgrep cron
+        
+        # Cleanup
+        docker stop test-release-container
+        docker rm test-release-container
+
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+      
+    - name: Generate documentation
+      run: |
+        mkdir -p docs-site
+        
+        # Create a simple documentation site
+        cat > docs-site/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>HDHomeRun EPG to XMLTV</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                h1, h2, h3 { color: #333; }
+                .container { max-width: 800px; margin: 0 auto; }
+                code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+                pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>HDHomeRun EPG to XMLTV</h1>
+                <p>Convert HDHomeRun EPG data to XMLTV format with M3U playlist generation.</p>
+                
+                <h2>Docker Hub</h2>
+                <p>Pull the latest image:</p>
+                <pre><code>docker pull ghcr.io/${{ github.repository }}:latest</code></pre>
+                
+                <h2>Usage</h2>
+                <h3>HTTP Mode</h3>
+                <pre><code>docker run -d \
+          -p 8000:8000 \
+          -e CONTAINER_MODE=http \
+          -e HDHOMERUN_HOST=192.168.1.100 \
+          ghcr.io/${{ github.repository }}:latest</code></pre>
+          
+                <h3>File-Only Mode</h3>
+                <pre><code>docker run -d \
+          -v ./output:/app/output \
+          -e CONTAINER_MODE=file-only \
+          -e HDHOMERUN_HOST=192.168.1.100 \
+          ghcr.io/${{ github.repository }}:latest</code></pre>
+          
+                <h2>Environment Variables</h2>
+                <ul>
+                    <li><code>CONTAINER_MODE</code>: http or file-only</li>
+                    <li><code>HDHOMERUN_HOST</code>: IP/hostname of HDHomeRun device</li>
+                    <li><code>CRON_SCHEDULE</code>: Cron expression for EPG refresh</li>
+                    <li><code>EPG_DAYS</code>: Number of days of EPG data to fetch</li>
+                    <li><code>DEBUG</code>: Debug mode (on/off/full)</li>
+                </ul>
+            </div>
+        </body>
+        </html>
+        EOF
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs-site
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

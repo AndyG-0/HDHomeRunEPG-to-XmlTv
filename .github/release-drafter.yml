@@ -1,0 +1,186 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&' 
+sort-by: 'merged_at'
+sort-direction: 'descending'
+
+categories:
+  - title: '🚀 New Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'feat'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bug'
+      - 'bugfix'
+      - 'hotfix'
+  - title: '📚 Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+  - title: '🔧 Maintenance & Dependencies'
+    labels:
+      - 'maintenance'
+      - 'chore'
+      - 'dependencies'
+      - 'dependency'
+  - title: '🚢 Container & Infrastructure'
+    labels:
+      - 'docker'
+      - 'ci'
+      - 'cd'
+      - 'infrastructure'
+      - 'deployment'
+  - title: '🔒 Security'
+    labels:
+      - 'security'
+      - 'vulnerability'
+  - title: '🎯 Performance'
+    labels:
+      - 'performance'
+      - 'perf'
+      - 'optimization'
+  - title: '🧪 Testing'
+    labels:
+      - 'test'
+      - 'testing'
+  - title: '💥 Breaking Changes'
+    labels:
+      - 'breaking'
+      - 'breaking-change'
+      - 'major'
+  - title: '📦 Other Changes'
+    labels:
+      - "*"
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+      - 'breaking-change'
+  minor:
+    labels:
+      - 'minor'
+      - 'feature'
+      - 'enhancement'
+      - 'feat'
+  patch:
+    labels:
+      - 'patch'
+      - 'fix'
+      - 'bug'
+      - 'bugfix'
+      - 'hotfix'
+      - 'chore'
+      - 'maintenance'
+      - 'docs'
+      - 'documentation'
+  default: patch
+
+exclude-labels:
+  - 'ignore-for-release'
+  - 'wip'
+  - 'work-in-progress'
+
+exclude-contributors:
+  - 'dependabot[bot]'
+  - 'renovate[bot]'
+
+autolabeler:
+  - label: 'docker'
+    files:
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - 'docker-compose*.yaml'
+      - '.dockerignore'
+  - label: 'ci'
+    files:
+      - '.github/workflows/*'
+      - '.github/actions/*'
+  - label: 'docs'
+    files:
+      - '*.md'
+      - 'docs/*'
+      - 'docs/**/*'
+  - label: 'test'
+    files:
+      - 'tests/*'
+      - 'tests/**/*'
+      - 'test_*.py'
+      - '*_test.py'
+  - label: 'dependencies'
+    files:
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'uv.lock'
+  - label: 'fix'
+    branch:
+      - '/fix\/.+/'
+      - '/bugfix\/.+/'
+      - '/hotfix\/.+/'
+    title:
+      - '/fix/i'
+      - '/bug/i'
+  - label: 'feature'
+    branch:
+      - '/feature\/.+/'
+      - '/feat\/.+/'
+    title:
+      - '/feat/i'
+      - '/feature/i'
+  - label: 'breaking'
+    title:
+      - '/breaking/i'
+      - '/major/i'
+    body:
+      - '/BREAKING CHANGE/i'
+
+template: |
+  ## What's Changed in v$RESOLVED_VERSION
+
+  $CHANGES
+
+  ## Container Images
+  
+  **Docker Images:**
+  ```bash
+  # Latest release
+  docker pull ghcr.io/$OWNER/$REPOSITORY:$RESOLVED_VERSION
+  docker pull ghcr.io/$OWNER/$REPOSITORY:latest
+  
+  # Specific architectures
+  docker pull ghcr.io/$OWNER/$REPOSITORY:$RESOLVED_VERSION-amd64
+  docker pull ghcr.io/$OWNER/$REPOSITORY:$RESOLVED_VERSION-arm64
+  ```
+
+  ## Quick Start
+
+  ### HTTP Mode
+  ```bash
+  docker run -d \
+    --name hdhomerun-epg \
+    -p 8000:8000 \
+    -e CONTAINER_MODE=http \
+    -e HDHOMERUN_HOST=192.168.1.100 \
+    ghcr.io/$OWNER/$REPOSITORY:$RESOLVED_VERSION
+  ```
+
+  ### File-Only Mode  
+  ```bash
+  docker run -d \
+    --name hdhomerun-epg \
+    -v ./output:/app/output \
+    -e CONTAINER_MODE=file-only \
+    -e HDHOMERUN_HOST=192.168.1.100 \
+    ghcr.io/$OWNER/$REPOSITORY:$RESOLVED_VERSION
+  ```
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+
+  ## Contributors
+  
+  $CONTRIBUTORS

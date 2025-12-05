@@ -1,0 +1,58 @@
+changelog:
+  exclude:
+    labels:
+      - 'ignore-for-release'
+      - 'dependencies'
+    authors:
+      - 'dependabot[bot]'
+      - 'renovate[bot]'
+  categories:
+    - title: '🚀 New Features'
+      labels:
+        - 'feature'
+        - 'enhancement'
+        - 'feat'
+    - title: '🐛 Bug Fixes'
+      labels:
+        - 'fix'
+        - 'bug'
+        - 'bugfix'
+        - 'hotfix'
+    - title: '📚 Documentation'
+      labels:
+        - 'documentation'
+        - 'docs'
+    - title: '🔧 Maintenance & Dependencies'
+      labels:
+        - 'maintenance'
+        - 'chore'
+        - 'dependencies'
+        - 'dependency'
+    - title: '🚢 Container & Infrastructure'
+      labels:
+        - 'docker'
+        - 'ci'
+        - 'cd'
+        - 'infrastructure'
+        - 'deployment'
+    - title: '🔒 Security'
+      labels:
+        - 'security'
+        - 'vulnerability'
+    - title: '🎯 Performance'
+      labels:
+        - 'performance'
+        - 'perf'
+        - 'optimization'
+    - title: '🧪 Testing'
+      labels:
+        - 'test'
+        - 'testing'
+    - title: '💥 Breaking Changes'
+      labels:
+        - 'breaking'
+        - 'breaking-change'
+        - 'major'
+    - title: '📦 Other Changes'
+      labels:
+        - "*"
