@@ -1,7 +1,7 @@
 services:
   # HDHomeRun EPG to XMLTV service in HTTP mode
   tvguide-http:
-    image: ghcr.io/andyg-0/hdhomerun-epg:latest
+    image: ghcr.io/andyg-0/hdhomerunepg-to-xmltv:latest
     container_name: tvguide-http
     build:
       context: .
@@ -43,7 +43,7 @@ services:
 
   # HDHomeRun EPG to XMLTV service in file-only mode (alternative configuration)
   tvguide-file-only:
-    image: ghcr.io/andyg-0/hdhomerun-epg:latest
+    image: ghcr.io/andyg-0/hdhomerunepg-to-xmltv:latest
     container_name: tvguide-file-only
     build:
       context: .

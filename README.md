@@ -1,7 +1,7 @@
 # HDHomeRun EPG to XMLTV Converter
 
 [![Build Status](https://github.com/AndyG-0/HDHomeRunEPG-to-XmlTv/workflows/Build%20and%20Push%20Docker%20Image/badge.svg)](https://github.com/AndyG-0/HDHomeRunEPG-to-XmlTv/actions)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/andyg-0/hdhomerun-epg)](https://github.com/AndyG-0/HDHomeRunEPG-to-XmlTv/pkgs/container/hdhomerun-epg)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/andyg-0/hdhomerunepg-to-xmltv)](https://github.com/AndyG-0/HDHomeRunEPG-to-XmlTv/pkgs/container/hdhomerunepg-to-xmltv)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![GitHub release](https://img.shields.io/github/v/release/AndyG-0/HDHomeRunEPG-to-XmlTv)](https://github.com/AndyG-0/HDHomeRunEPG-to-XmlTv/releases/latest)
 [![semantic-release: conventional](https://img.shields.io/badge/semantic--release-conventional-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
@@ -35,21 +35,21 @@ A Python application that downloads Electronic Program Guide (EPG) data from HDH
 ### 🚀 GitHub Container Registry
 ```bash
 # Pull the latest image
-docker pull ghcr.io/andyg-0/hdhomerun-epg:latest
+docker pull ghcr.io/andyg-0/hdhomerunepg-to-xmltv:latest
 
 # Run in HTTP mode
 docker run -d \
   -p 9999:9999 \
   -e HDHOMERUN_HOST=192.168.1.100 \
   -e CONTAINER_MODE=http \
-  ghcr.io/andyg-0/hdhomerun-epg:latest
+  ghcr.io/andyg-0/hdhomerunepg-to-xmltv:latest
 
 # Run in file-only mode
 docker run -d \
   -v ./output:/app/output \
   -e HDHOMERUN_HOST=192.168.1.100 \
   -e CONTAINER_MODE=file-only \
-  ghcr.io/andyg-0/hdhomerun-epg:latest
+  ghcr.io/andyg-0/hdhomerunepg-to-xmltv:latest
 ```
 
 ## Features
