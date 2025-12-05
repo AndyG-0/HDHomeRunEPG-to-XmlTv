@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     cron \
     wget \
     curl \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv package manager
