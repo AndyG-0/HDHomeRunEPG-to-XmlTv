@@ -55,3 +55,5 @@ output/*.m3u
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+**/**/*.log

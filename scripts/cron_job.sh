@@ -28,16 +28,8 @@ if [ -f "${EPG_OUTPUT_FILE}" ]; then
     echo "$(date): Generating M3U playlist" >> /app/output/cron.log
     
     # Determine server URL for M3U generation
-    if [ "${CONTAINER_MODE}" = "http" ]; then
-        SERVER_URL="http://${HTTP_BIND_ADDRESS}:${HTTP_PORT}"
-        # If bind address is 0.0.0.0, use localhost for internal generation
-        if [ "${HTTP_BIND_ADDRESS}" = "0.0.0.0" ]; then
-            SERVER_URL="http://localhost:${HTTP_PORT}"
-        fi
-    else
-        # In file-only mode, use a placeholder URL
-        SERVER_URL="http://localhost:8000"
-    fi
+    # Use HDHomeRun device for streaming URLs
+    SERVER_URL="http://${HDHOMERUN_HOST}:5004"
     
     if uv run python /app/generate_m3u_from_xmltv.py \
         "${EPG_OUTPUT_FILE}" \

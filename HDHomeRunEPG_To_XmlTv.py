@@ -124,7 +124,7 @@ def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
     """Create XMLTV channel element according to DTD."""
     # Create a stable channel ID based on guide number for M3U tvg-id matching
     guide_number = channel_data.get("GuideNumber", "")
-    channel_id = f"hdhomerun.{guide_number}"
+    channel_id = guide_number
 
     channel = ET.SubElement(xmltv_root, "channel", id=channel_id)
     ET.SubElement(channel, "display-name").text = channel_data.get("GuideName", "Unknown")
@@ -135,7 +135,7 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
     """Create XMLTV programme element according to DTD."""
     try:
         # Create stable channel ID matching the format used in create_xmltv_channel
-        channel_id = f"hdhomerun.{channel_number}"
+        channel_id = channel_number
 
         start_time = datetime.datetime.fromtimestamp(programme_data["StartTime"], tz=pytz.UTC).astimezone(LOCAL_TZ)
         duration = programme_data.get("EndTime", programme_data["StartTime"]) - programme_data["StartTime"]

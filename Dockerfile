@@ -23,6 +23,7 @@ RUN uv sync --frozen --no-dev
 # Copy application files
 COPY HDHomeRunEPG_To_XmlTv.py ./
 COPY generate_m3u_from_xmltv.py ./
+# Updated for tvg-id fix
 COPY http_server.py ./
 
 # Create scripts directory and copy scripts

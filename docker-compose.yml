@@ -9,13 +9,13 @@ services:
     ports:
       - "9999:9999"
     volumes:
-      - output_data:/app/output
+      - ./output:/app/output
     environment:
       # Container Mode: 'http' or 'file-only'
       - CONTAINER_MODE=http
       
       # HDHomeRun device configuration
-      - HDHOMERUN_HOST=192.168.1.100
+      - HDHOMERUN_HOST=192.168.50.33
       
       # EPG Output configuration
       - EPG_OUTPUT_FILE=/app/output/epg.xml
@@ -35,7 +35,7 @@ services:
       - CRON_SCHEDULE=0 */4 * * *
     restart: 'unless-stopped'
     healthcheck:
-      test: ["/app/scripts/healthcheck.sh"]
+      test: ["CMD-SHELL", "/app/scripts/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,7 +74,7 @@ services:
     profiles:
       - file-only  # Use docker-compose --profile file-only up to start this service
     healthcheck:
-      test: ["/app/scripts/healthcheck.sh"]
+      test: ["CMD-SHELL", "/app/scripts/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
