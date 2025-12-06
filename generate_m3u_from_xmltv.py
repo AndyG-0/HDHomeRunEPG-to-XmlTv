@@ -86,7 +86,7 @@ def generate_m3u(channels: list, server_url: str, output_file: str) -> None:
 
                 # Add group title for favorites (HDHomeRun uses this for favorited channels)
                 extinf_line += ' group-title="Channels"'
-                
+
                 # Channel display name with number prefix (matching HDHomeRun format)
                 extinf_line += f',{channel_number} {channel_name}\n'
                 f.write(extinf_line)
