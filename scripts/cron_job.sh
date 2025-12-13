@@ -5,6 +5,9 @@
 
 set -e
 
+# Change to the app directory to ensure uv can find pyproject.toml and .venv
+cd /app
+
 echo "$(date): Starting EPG and M3U generation" >> /app/output/cron.log
 
 # Generate the XMLTV EPG file

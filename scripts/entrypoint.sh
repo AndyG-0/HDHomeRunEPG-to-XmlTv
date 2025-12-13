@@ -16,7 +16,8 @@ if [ -z "${HDHOMERUN_HOST}" ]; then
 fi
 
 # Create environment file for cron jobs
-printenv | grep -E '^(HDHOMERUN_HOST|EPG_OUTPUT_FILE|M3U_OUTPUT_FILE|EPG_DAYS|EPG_HOURS|DEBUG|HTTP_PORT|HTTP_BIND_ADDRESS|CONTAINER_MODE)=' > /etc/environment
+# Include PATH to ensure uv and python are accessible
+printenv | grep -E '^(HDHOMERUN_HOST|EPG_OUTPUT_FILE|M3U_OUTPUT_FILE|EPG_DAYS|EPG_HOURS|DEBUG|HTTP_PORT|HTTP_BIND_ADDRESS|CONTAINER_MODE|PATH)=' > /etc/environment
 
 # Setup cron job with the configured schedule
 echo "Setting up cron job with schedule: ${CRON_SCHEDULE}"
