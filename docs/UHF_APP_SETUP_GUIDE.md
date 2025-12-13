@@ -10,21 +10,42 @@ The UHF app on Apple TV/iOS was unable to automatically match M3U playlist chann
 
 ### Before
 ```xml
-<!-- Old format - just a number -->
-<channel id="1">
-  <display-name>Channel 1</display-name>
-</channel>
-<programme channel="1" ... />
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Old format - missing DOCTYPE and using bare channel numbers -->
+<tv>
+  <channel id="1">
+    <display-name>Channel 1</display-name>
+  </channel>
+  <programme channel="1" start="..." stop="...">
+    <title>Programme Name</title>
+  </programme>
+</tv>
 ```
+
+**Issues with old format:**
+- ❌ Missing `<!DOCTYPE tv SYSTEM "xmltv.dtd">` declaration
+- ❌ Channel IDs were just numbers, causing matching issues with M3U playlists
+- ❌ Some XMLTV parsers (like Jellyfin and UHF) failed to read the file correctly
 
 ### After
 ```xml
-<!-- New format - prefixed with hdhomerun. for clarity and stability -->
-<channel id="hdhomerun.1">
-  <display-name>Channel 1</display-name>
-</channel>
-<programme channel="hdhomerun.1" ... />
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tv SYSTEM "xmltv.dtd">
+<!-- New format - includes DOCTYPE declaration and hdhomerun. prefix for channel IDs -->
+<tv>
+  <channel id="hdhomerun.1">
+    <display-name>Channel 1</display-name>
+  </channel>
+  <programme channel="hdhomerun.1" start="..." stop="...">
+    <title>Programme Name</title>
+  </programme>
+</tv>
 ```
+
+**Key improvements:**
+- ✅ Includes `<!DOCTYPE tv SYSTEM "xmltv.dtd">` for proper XMLTV DTD compliance
+- ✅ Channel IDs use `hdhomerun.{GuideNumber}` format for stable M3U matching
+- ✅ Compatible with Jellyfin, UHF, and other XMLTV-compliant applications
 
 ## Setup Instructions
 
