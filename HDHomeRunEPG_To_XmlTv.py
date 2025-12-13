@@ -125,15 +125,23 @@ def add_doctype_declaration(xml_content: str) -> str:
     """Add DOCTYPE declaration to XMLTV content for DTD compliance.
     
     Args:
-        xml_content: XML string with XML declaration
+        xml_content: XML string with or without XML declaration
         
     Returns:
         XML string with DOCTYPE declaration inserted after XML declaration
     """
     xml_lines = xml_content.split('\n', 1)
-    if len(xml_lines) == 2:
-        return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
+    
+    # Check if first line contains XML declaration
+    if len(xml_lines) >= 1 and xml_lines[0].strip().startswith('<?xml'):
+        # Insert DOCTYPE after XML declaration
+        if len(xml_lines) == 2:
+            return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
+        else:
+            # Only XML declaration, no content after it
+            return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n'
     else:
+        # No XML declaration found, add both
         return '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_content
 
 def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:

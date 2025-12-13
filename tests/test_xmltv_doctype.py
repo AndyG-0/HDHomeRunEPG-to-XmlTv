@@ -173,9 +173,19 @@ class TestXMLTVDoctypeAndFormat(unittest.TestCase):
         result2 = hdhomerun.add_doctype_declaration(xml_no_newline)
         self.assertIn('<!DOCTYPE tv SYSTEM "xmltv.dtd">', result2, "DOCTYPE should be added even without newline")
         
+        # Test with no XML declaration at all (edge case)
+        xml_no_decl = "<tv>content</tv>"
+        result3 = hdhomerun.add_doctype_declaration(xml_no_decl)
+        self.assertIn('<?xml version', result3, "XML declaration should be added if missing")
+        self.assertIn('<!DOCTYPE tv SYSTEM "xmltv.dtd">', result3, "DOCTYPE should be added")
+        lines3 = result3.split('\n')
+        self.assertTrue(lines3[0].startswith('<?xml'), "First line should be XML declaration")
+        self.assertIn('<!DOCTYPE', lines3[1], "Second line should be DOCTYPE")
+        
         print("✓ add_doctype_declaration() function works correctly")
         print(f"  ✓ Handles XML with newline after declaration")
         print(f"  ✓ Handles XML without newline after declaration")
+        print(f"  ✓ Handles XML without declaration (adds both)")
 
 
 if __name__ == "__main__":
