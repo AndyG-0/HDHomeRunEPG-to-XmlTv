@@ -1,6 +1,7 @@
 
 import argparse
 import datetime
+import io
 import json
 import logging
 import os
@@ -120,11 +121,34 @@ def fetch_epg_data(device_auth: str, channels: list, days: int, hours: int) -> d
         logger.error("Error fetching EPG for all channels for start time %s: %s", next_start_date, e)
         return epg_data
 
+def add_doctype_declaration(xml_content: str) -> str:
+    """Add DOCTYPE declaration to XMLTV content for DTD compliance.
+    
+    Args:
+        xml_content: XML string with or without XML declaration
+        
+    Returns:
+        XML string with DOCTYPE declaration inserted after XML declaration
+    """
+    xml_lines = xml_content.split('\n', 1)
+    
+    # Check if first line contains XML declaration
+    if len(xml_lines) >= 1 and xml_lines[0].strip().startswith('<?xml'):
+        # Insert DOCTYPE after XML declaration
+        if len(xml_lines) == 2:
+            return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
+        else:
+            # Only XML declaration, no content after it
+            return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n'
+    else:
+        # No XML declaration found, add both
+        return '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_content
+
 def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
     """Create XMLTV channel element according to DTD."""
     # Create a stable channel ID based on guide number for M3U tvg-id matching
     guide_number = channel_data.get("GuideNumber", "")
-    channel_id = guide_number
+    channel_id = f"hdhomerun.{guide_number}"
 
     channel = ET.SubElement(xmltv_root, "channel", id=channel_id)
     ET.SubElement(channel, "display-name").text = channel_data.get("GuideName", "Unknown")
@@ -135,7 +159,7 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
     """Create XMLTV programme element according to DTD."""
     try:
         # Create stable channel ID matching the format used in create_xmltv_channel
-        channel_id = channel_number
+        channel_id = f"hdhomerun.{channel_number}"
 
         start_time = datetime.datetime.fromtimestamp(programme_data["StartTime"], tz=pytz.UTC).astimezone(LOCAL_TZ)
         duration = programme_data.get("EndTime", programme_data["StartTime"]) - programme_data["StartTime"]
@@ -246,7 +270,19 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
             os.makedirs(output_dir, exist_ok=True)
         tree = ET.ElementTree(xmltv_root)
         ET.indent(tree, space="\t", level=0)
-        tree.write(filename, encoding="UTF-8", xml_declaration=True)
+        
+        # Write to a temporary buffer first to add DOCTYPE declaration
+        buffer = io.BytesIO()
+        tree.write(buffer, encoding="UTF-8", xml_declaration=True)
+        xml_content = buffer.getvalue().decode("UTF-8")
+        
+        # Add DOCTYPE declaration for XMLTV DTD compliance
+        xml_with_doctype = add_doctype_declaration(xml_content)
+        
+        # Write the final XML with DOCTYPE
+        with open(filename, 'w', encoding='UTF-8') as f:
+            f.write(xml_with_doctype)
+        
         logger.info("Writing XMLTV to file %s Completed", filename)
     except OSError as e:
         logger.error("Error writing XML file: %s", e)

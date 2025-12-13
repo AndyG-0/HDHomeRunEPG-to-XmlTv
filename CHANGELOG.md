@@ -21,7 +21,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - HTTP 400 error handling when API limits are reached
 - Directory creation for nested output paths
-- XMLTV format compliance and validation
+- **CRITICAL**: XMLTV format compliance - Added DOCTYPE declaration for Jellyfin and UHF compatibility
+- **CRITICAL**: Channel IDs now properly use `hdhomerun.{GuideNumber}` format
 - M3U channel ID matching for IPTV applications
 - "New" episode bug where all episodes were marked as new (#5)
 - Status handling bug (#14)

@@ -55,12 +55,13 @@ docker run -d \
 ## Features
 
 - 📺 Downloads EPG data directly from HDHomeRun devices  
-- 🔄 Converts to standard XMLTV format
+- 🔄 Converts to standard XMLTV format with proper DTD compliance
 - 📱 Compatible with IPTV apps (UHF, TiviMate, etc.)
 - 🎬 Works with media servers (Jellyfin, Plex)
 - ⚡ Built-in HTTP server for easy access
 - 🐳 Docker support with automated scheduling
 - 🔧 Auto-generates matching M3U playlists
+- ✅ **Fixed:** Proper XMLTV DOCTYPE declaration for better parser compatibility
 
 ## Quick Start
 
