@@ -4,6 +4,7 @@ Test script to verify XMLTV format includes proper DOCTYPE declaration
 and channel IDs use the correct hdhomerun.X format.
 """
 
+import io
 import sys
 import tempfile
 import unittest
@@ -42,17 +43,12 @@ class TestXMLTVDoctypeAndFormat(unittest.TestCase):
             tree = ET.ElementTree(xmltv_root)
             ET.indent(tree, space="\t", level=0)
 
-            import io
             buffer = io.BytesIO()
             tree.write(buffer, encoding="UTF-8", xml_declaration=True)
             xml_content = buffer.getvalue().decode("UTF-8")
 
-            # Add DOCTYPE declaration
-            xml_lines = xml_content.split('\n', 1)
-            if len(xml_lines) == 2:
-                xml_with_doctype = xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
-            else:
-                xml_with_doctype = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_content
+            # Add DOCTYPE declaration using shared function
+            xml_with_doctype = hdhomerun.add_doctype_declaration(xml_content)
 
             with open(filename, 'w', encoding='UTF-8') as f:
                 f.write(xml_with_doctype)
@@ -156,6 +152,30 @@ class TestXMLTVDoctypeAndFormat(unittest.TestCase):
         print("✓ Programme elements correctly reference channels with hdhomerun.X format")
         print(f"  ✓ Channel ID: {channel_id}")
         print(f"  ✓ Programme channel: {programme_channel}")
+
+    def test_add_doctype_declaration_function(self):
+        """Test the add_doctype_declaration helper function."""
+        # Test with standard XML declaration
+        xml_with_decl = "<?xml version='1.0' encoding='UTF-8'?>\n<tv>content</tv>"
+        result = hdhomerun.add_doctype_declaration(xml_with_decl)
+        
+        self.assertIn('<?xml version', result, "XML declaration should be preserved")
+        self.assertIn('<!DOCTYPE tv SYSTEM "xmltv.dtd">', result, "DOCTYPE should be added")
+        
+        # Verify order: XML declaration, then DOCTYPE, then content
+        lines = result.split('\n')
+        self.assertTrue(lines[0].startswith('<?xml'), "First line should be XML declaration")
+        self.assertIn('<!DOCTYPE', lines[1], "Second line should be DOCTYPE")
+        self.assertIn('<tv>', lines[2], "Third line should be root element")
+        
+        # Test with content but no newline after XML declaration
+        xml_no_newline = "<?xml version='1.0' encoding='UTF-8'?><tv>content</tv>"
+        result2 = hdhomerun.add_doctype_declaration(xml_no_newline)
+        self.assertIn('<!DOCTYPE tv SYSTEM "xmltv.dtd">', result2, "DOCTYPE should be added even without newline")
+        
+        print("✓ add_doctype_declaration() function works correctly")
+        print(f"  ✓ Handles XML with newline after declaration")
+        print(f"  ✓ Handles XML without newline after declaration")
 
 
 if __name__ == "__main__":

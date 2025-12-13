@@ -1,6 +1,7 @@
 
 import argparse
 import datetime
+import io
 import json
 import logging
 import os
@@ -119,6 +120,21 @@ def fetch_epg_data(device_auth: str, channels: list, days: int, hours: int) -> d
     except (json.JSONDecodeError, KeyError) as e:
         logger.error("Error fetching EPG for all channels for start time %s: %s", next_start_date, e)
         return epg_data
+
+def add_doctype_declaration(xml_content: str) -> str:
+    """Add DOCTYPE declaration to XMLTV content for DTD compliance.
+    
+    Args:
+        xml_content: XML string with XML declaration
+        
+    Returns:
+        XML string with DOCTYPE declaration inserted after XML declaration
+    """
+    xml_lines = xml_content.split('\n', 1)
+    if len(xml_lines) == 2:
+        return xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
+    else:
+        return '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_content
 
 def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
     """Create XMLTV channel element according to DTD."""
@@ -247,18 +263,13 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
         tree = ET.ElementTree(xmltv_root)
         ET.indent(tree, space="\t", level=0)
         
-        # Write to a temporary string first to add DOCTYPE
-        import io
+        # Write to a temporary buffer first to add DOCTYPE declaration
         buffer = io.BytesIO()
         tree.write(buffer, encoding="UTF-8", xml_declaration=True)
         xml_content = buffer.getvalue().decode("UTF-8")
         
-        # Add DOCTYPE declaration after XML declaration for XMLTV DTD compliance
-        xml_lines = xml_content.split('\n', 1)
-        if len(xml_lines) == 2:
-            xml_with_doctype = xml_lines[0] + '\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_lines[1]
-        else:
-            xml_with_doctype = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE tv SYSTEM "xmltv.dtd">\n' + xml_content
+        # Add DOCTYPE declaration for XMLTV DTD compliance
+        xml_with_doctype = add_doctype_declaration(xml_content)
         
         # Write the final XML with DOCTYPE
         with open(filename, 'w', encoding='UTF-8') as f:
