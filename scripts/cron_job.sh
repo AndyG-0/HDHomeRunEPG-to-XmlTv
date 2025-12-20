@@ -5,14 +5,11 @@
 
 set -e
 
-# Change to the app directory to ensure uv can find pyproject.toml and .venv
-cd /app
-
 echo "$(date): Starting EPG and M3U generation" >> /app/output/cron.log
 
 # Generate the XMLTV EPG file
 echo "$(date): Generating XMLTV EPG file" >> /app/output/cron.log
-if uv run python /app/HDHomeRunEPG_To_XmlTv.py \
+if python /app/HDHomeRunEPG_To_XmlTv.py \
     --host "${HDHOMERUN_HOST}" \
     --filename "${EPG_OUTPUT_FILE}" \
     --days "${EPG_DAYS}" \
@@ -34,7 +31,7 @@ if [ -f "${EPG_OUTPUT_FILE}" ]; then
     # Use HDHomeRun device for streaming URLs
     SERVER_URL="http://${HDHOMERUN_HOST}:5004"
     
-    if uv run python /app/generate_m3u_from_xmltv.py \
+    if python /app/generate_m3u_from_xmltv.py \
         "${EPG_OUTPUT_FILE}" \
         "${M3U_OUTPUT_FILE}" \
         --server-url "${SERVER_URL}" \

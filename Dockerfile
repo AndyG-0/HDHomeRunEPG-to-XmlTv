@@ -21,6 +21,10 @@ COPY pyproject.toml uv.lock* ./
 # Use --frozen to ensure reproducible builds, --no-dev to skip dev dependencies
 RUN uv sync --frozen --no-dev
 
+# Place the virtual environment at the front of the path
+# This activates the environment for all subsequent commands
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Copy application files
 COPY HDHomeRunEPG_To_XmlTv.py ./
 COPY generate_m3u_from_xmltv.py ./

@@ -65,7 +65,7 @@ if [ "${CONTAINER_MODE}" = "http" ]; then
     echo "Starting HTTP server mode on ${HTTP_BIND_ADDRESS}:${HTTP_PORT}"
     
     # Start HTTP server in the background
-    uv run python /app/http_server.py &
+    python /app/http_server.py &
     SERVER_PID=$!
     
     # Wait for either the server to exit or a signal
