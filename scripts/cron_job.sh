@@ -5,7 +5,19 @@
 
 set -e
 
+# Source environment variables from /etc/environment
+if [ -f /etc/environment ]; then
+    set -a  # automatically export all variables
+    source /etc/environment
+    set +a
+fi
+
+# Explicitly set PATH to include virtual environment
+export PATH="/app/.venv/bin:$PATH"
+
 echo "$(date): Starting EPG and M3U generation" >> /app/output/cron.log
+echo "$(date): Using Python: $(which python)" >> /app/output/cron.log
+echo "$(date): PATH: $PATH" >> /app/output/cron.log
 
 # Generate the XMLTV EPG file
 echo "$(date): Generating XMLTV EPG file" >> /app/output/cron.log

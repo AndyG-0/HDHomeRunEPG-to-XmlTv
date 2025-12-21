@@ -17,7 +17,18 @@ fi
 
 # Create environment file for cron jobs
 # Include PATH to ensure uv and python are accessible
-printenv | grep -E '^(HDHOMERUN_HOST|EPG_OUTPUT_FILE|M3U_OUTPUT_FILE|EPG_DAYS|EPG_HOURS|DEBUG|HTTP_PORT|HTTP_BIND_ADDRESS|CONTAINER_MODE|PATH)=' > /etc/environment
+cat > /etc/environment << EOF
+PATH=/app/.venv/bin:/usr/local/bin:/usr/bin:/bin
+HDHOMERUN_HOST=${HDHOMERUN_HOST}
+EPG_OUTPUT_FILE=${EPG_OUTPUT_FILE}
+M3U_OUTPUT_FILE=${M3U_OUTPUT_FILE}
+EPG_DAYS=${EPG_DAYS}
+EPG_HOURS=${EPG_HOURS}
+DEBUG=${DEBUG}
+HTTP_PORT=${HTTP_PORT}
+HTTP_BIND_ADDRESS=${HTTP_BIND_ADDRESS}
+CONTAINER_MODE=${CONTAINER_MODE}
+EOF
 
 # Setup cron job with the configured schedule
 echo "Setting up cron job with schedule: ${CRON_SCHEDULE}"
